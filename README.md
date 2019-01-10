@@ -8,7 +8,7 @@ Clone the repository and install with the following commands:
     git clone https://github.com/petersbingham/simpleplot.git
     cd simpleplot
     python setup.py install
-    
+
 ## Dependencies
 
 Third party packages:
@@ -16,4 +16,4 @@ Third party packages:
 
 ## Usage
 
-Look at the functions in the __init__.py.
+Look at the functions in the \_\_init\_\_.py.
