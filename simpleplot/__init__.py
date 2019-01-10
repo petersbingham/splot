@@ -146,16 +146,6 @@ def _get_data_from_csv(csvpath):
             for i in range(0,len(row[1:])):
                 yss[i].append(float(row[1+i]))
     return xs, yss
-            
-def plot_line_from_csv(csvpath,title="",xlabel="",ylabel="",legends=None,logx=False,logy=False,markerSz=None,path=None,markWithLine=False,drawAxes=False):
-    xs,yss = _get_data_from_csv(csvpath)
-    plot_line(title,xs,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,path,drawAxes)
-    
-def plot_lines(xs,yss,title="",xlabel="",ylabel="",legends=None,logx=False,logy=False,markerSz=None,path=None,markWithLine=False,drawAxes=False):
-    _plot(title,xs,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,path,drawAxes)
-  
-def plot_lines_unsynced(xss,yss,title="",xlabel="",ylabel="",legends=None,logx=False,logy=False,markerSz=None,path=None,markWithLine=False,drawAxes=False):
-    _plot2(title,xss,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,path,drawAxes)
 
 def _plot(title,xs,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,path,drawAxes):
     p = StaticPlot(title,drawAxes=drawAxes)
@@ -185,20 +175,25 @@ def _plot2(title,xss,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,p
     p.reveal()
     if path is not None:
         p.save(path)
-  
-def plot_scat(xs,ys,title="",xlabel="",ylabel="",logx=False,logy=False,legend=None,markerSz=None,path=None,drawAxes=False):
-    p = StaticPlot(title,drawAxes=drawAxes)
-    p.add_plot(xlabel, ylabel, logx, logy)
-    p.add_scat(1,xs,ys, logx, logy,legend,markerSz)
-    p.reveal()
-    if path is not None:
-        p.save(path) 
-  
+
+def plot_lines_from_csv(csvpath,title="",xlabel="",ylabel="",legends=None,logx=False,logy=False,markerSz=None,path=None,markWithLine=False,drawAxes=False):
+    xs,yss = _get_data_from_csv(csvpath)
+    plot_line(title,xs,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,path,drawAxes)
+
+def plot_lines(xss,yss,title="",xlabel="",ylabel="",legends=None,logx=False,logy=False,markerSz=None,path=None,markWithLine=False,drawAxes=False):
+    if not isinstance(xss[0], list):
+        _plot(title,xss,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,path,drawAxes)
+    else:
+        _plot2(title,xss,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,path,drawAxes)
+
 def plot_scats(xss,yss,title="",xlabel="",ylabel="",logx=False,logy=False,legend=None,markerSz=None,path=None,drawAxes=False):
     p = StaticPlot(title,drawAxes=drawAxes)
     p.add_plot(xlabel, ylabel, logx, logy)
+    if not isinstance(xss[0], list):
+        xss = [xss]
+        yss = [yss]
     for i in range(len(xss)):
       p.add_scat(i,xss[i],yss[i],logx,logy,legend,markerSz)
     p.reveal()
     if path is not None:
-        p.save(path)  
+        p.save(path) 
