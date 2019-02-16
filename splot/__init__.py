@@ -97,6 +97,9 @@ class StaticPlot:
             plt.axvline(0, color='black')
         if len(self.legends) > 0:
             plt.legend(self.lines, self.legends, prop={'size':9})
+        if line_width is not None:
+            for line in self.lines:
+                line.set_linewidth(line_width)
         axes = plt.gca()
         if xlim is not None:
             axes.set_xlim(xlim)
@@ -137,9 +140,17 @@ def set_extents(xlim_, ylim_):
     xlim = xlim_
     ylim = ylim_
 
+def set_colour_cycle(cycle):
+    matplotlib.rcParams['axes.color_cycle'] = cycle
+
 def turn_off_colour_cycle():
     matplotlib.rcParams['axes.color_cycle'] = ['black']
 
+line_width = None
+def set_line_width(width):
+    global line_width
+    line_width = width
+    
 def _get_data_from_csv(csvpath):
     xs = []
     yss = None

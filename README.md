@@ -1,12 +1,12 @@
-# simpleplot
+# splot
 Simple plot line and scatter plot functions. Built around matplotlib.
 
 ## Installation
 
 Clone the repository and install with the following commands:
 
-    git clone https://github.com/petersbingham/simpleplot.git
-    cd simpleplot
+    git clone https://github.com/petersbingham/splot.git
+    cd splot
     python setup.py install
 
 ## Dependencies
