@@ -91,7 +91,7 @@ class StaticPlot:
         #    plt.text(a+0.002, b+0.02, '{0:.5f}'.format(b))
         return l
 
-    def reveal(self):  
+    def reveal(self, display):  
         if self.draw_axes:
             plt.axhline(0, color='black')
             plt.axvline(0, color='black')
@@ -106,7 +106,8 @@ class StaticPlot:
         if ylim is not None:
             axes.set_ylim(ylim)
         plt.draw()
-        plt.show()
+        if display:
+            plt.show()
 
     def save(self, path):
         self.fig.savefig(path, dpi=self.DPI)
@@ -164,8 +165,17 @@ def _get_data_from_csv(csvpath):
                 yss[i].append(float(row[1+i]))
     return xs, yss
 
+def _initialise(display):
+    if not display:
+        plt.switch_backend('Agg')
+
+def _finialise(p, path, display):
+    p.reveal(display)
+    if path is not None:
+        p.save(path)
+
 def _plot(title, xs, yss, xlabel, ylabel, legends, logx, logy,
-          marker_sz, mark_with_line, path, draw_axes):
+          marker_sz, mark_with_line, draw_axes, path, display):
     p = StaticPlot(title,draw_axes=draw_axes)
     p.add_plot(xlabel, ylabel, logx, logy)
     for i in range(len(yss)):
@@ -173,12 +183,10 @@ def _plot(title, xs, yss, xlabel, ylabel, legends, logx, logy,
             p.add_line(1,xs,yss[i],legends[i],marker_sz,mark_with_line)
         else:
             p.add_line(1,xs,yss[i],None,marker_sz,mark_with_line)
-    p.reveal()
-    if path is not None:
-        p.save(path)
+    return p
 
 def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
-           logy, marker_sz, mark_with_line, path,draw_axes):
+           logy, marker_sz, mark_with_line, draw_axes, path, display):
     p = StaticPlot(title,draw_axes=draw_axes)
     p.add_plot(xlabel, ylabel, logx, logy)
     for i in range(len(xss)):
@@ -191,29 +199,30 @@ def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
             p.add_line(1,xss[i],yss[i],legends[i],ms,False)
         else:
             p.add_line(1,xss[i],yss[i],None,ms,False)
-    p.reveal()
-    if path is not None:
-        p.save(path)
+    return p
 
-def plot_line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
-                        marker_sz=None, path=None, mark_with_line=False, draw_axes=False):
+def line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
+                  marker_sz=None, path=None, mark_with_line=False, draw_axes=False):
     xs,yss = _get_data_from_csv(csvpath)
     plot_line(title, xs, yss, xlabel, ylabel, legends, logx,
               logy, marker_sz, mark_with_line, path, draw_axes)
 
-def plot_line(xss, yss, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
-              marker_sz=None, path=None, mark_with_line=False, draw_axes=False):
+def line(xss, yss, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
+         marker_sz=None, mark_with_line=False, draw_axes=False, path=None, display=True):
+    _initialise(display)
     if not isinstance(yss[0], list):
         yss = [yss]
     if not isinstance(xss[0], list):
-        _plot(title, xss, yss, xlabel, ylabel, legends, logx, logy, 
-              marker_sz, mark_with_line, path,draw_axes)
+        p = _plot(title, xss, yss, xlabel, ylabel, legends, logx, logy, 
+                  marker_sz, mark_with_line, draw_axes, path, display)
     else:
-        _plot2(title, xss, yss, xlabel, ylabel, legends, logx, 
-               logy, marker_sz, mark_with_line, path,draw_axes)
+        p = _plot2(title, xss, yss, xlabel, ylabel, legends, logx, 
+                   logy, marker_sz, mark_with_line, draw_axes, path, display)
+    _finialise(p, path, display)
 
-def plot_scatter(xss, yss, title="", xlabel="", ylabel="", logx=False, logy=False,
-                 legend=None, marker_sz=None, path=None, draw_axes=False):
+def scatter(xss, yss, title="", xlabel="", ylabel="", logx=False, logy=False,
+            legend=None, marker_sz=None, draw_axes=False, path=None, display=True):
+    _initialise(display)
     p = StaticPlot(title, draw_axes=draw_axes)
     p.add_plot(xlabel, ylabel, logx, logy)
     if not isinstance(xss[0], list):
@@ -225,6 +234,5 @@ def plot_scatter(xss, yss, title="", xlabel="", ylabel="", logx=False, logy=Fals
         yss = [yss]
     for i in range(len(xss)):
       p.add_scat(i, xss[i], yss[i], logx, logy, legend, marker_sz)
-    p.reveal()
-    if path is not None:
-        p.save(path)
+    _finialise(p, path, display)
+
