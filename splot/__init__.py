@@ -53,26 +53,42 @@ class StaticPlot:
 
     def _add_data(self, plot_num, xs, ys, legend, marker_sz,
                   scatter, mark_with_line):
-        xs, ys = self._convert_values(xs, ys)
+        xs, ys, use_ticks = self._convert_values(xs, ys, plot_num, scatter)
         if scatter:
             l = self._add_scat_type(plot_num, xs, ys, marker_sz)
         else:
-            l = self._add_line_type(plot_num, xs, ys, marker_sz, mark_with_line)
+            l = self._add_line_type(plot_num, xs, ys, marker_sz, mark_with_line, use_ticks)
         self.lines.append(l)
         if legend is not None:
             self.legends.append(legend)
 
-    def _convert_values(self, xs, ys):
+    def _create_array(self, vals):
+        try:
+            return np.ndarray((len(vals),), buffer=np.array(vals))
+        except TypeError:
+            # Contents of array can't be ints. Try converting to floats
+            return np.ndarray((len(vals),), buffer=np.array([float(val) for val in vals]))
+
+    def _convert_values(self, xs, ys, plot_num, scatter):
+        use_ticks = False
         if type(xs) is list:
-            xs = np.ndarray((len(xs),), buffer=np.array(xs)) #Contents of array need to be floats or can get: "TypeError: buffer is too small for requested array"
+            if not scatter and not self.axis_config[plot_num-1][0]:
+                try:
+                    xs = self._create_array(xs)
+                except ValueError:
+                    # Just use as strings labelling the x-axis.
+                    use_ticks = True
+                    pass
+            else:
+                xs = self._create_array(xs)
         if type(ys) is list:
-            ys = np.ndarray((len(ys),), buffer=np.array(ys))
-        return (xs,ys)
+            ys = self._create_array(ys)
+        return xs, ys, use_ticks
 
     def _add_scat_type(self, plot_num, xs, ys, marker_sz):
         plt.scatter(xs,ys,color=['black', 'red', 'blue', 'purple'][plot_num],s=20,edgecolor='none')
 
-    def _add_line_type(self, plot_num, xs, ys, marker_sz, mark_with_line):
+    def _add_line_type(self, plot_num, xs, ys, marker_sz, mark_with_line, use_ticks):
         kwargs = {'basex':10}
         if marker_sz:
             kwargs = {'basex':10, 'linestyle':'None' if not mark_with_line else 'solid', 'marker':'o', 'markerfacecolor':'black', 'markersize':marker_sz}
@@ -82,13 +98,18 @@ class StaticPlot:
             l, = plt.semilogx(xs, ys, **kwargs)
         elif self.axis_config[plot_num-1][1]:
             kwargs.pop('basex')
-            l, = plt.semilogy(xs, ys, **kwargs)
+            if not use_ticks:
+              l, = plt.semilogy(xs, ys, **kwargs)
+            else:
+              l, = plt.semilogy(ys, **kwargs)
         else:
             kwargs.pop('basex')
-            #print str(len(xs)) + " " + str(len(ys))
-            l, = plt.plot(xs, ys, **kwargs)
-        #for a,b in zip(xs, ys):
-        #    plt.text(a+0.002, b+0.02, '{0:.5f}'.format(b))
+            if not use_ticks:
+              l, = plt.plot(xs, ys, **kwargs)
+            else:
+              l, = plt.plot(ys, **kwargs)
+        if use_ticks:
+            plt.xticks(range(len(xs)), xs)
         return l
 
     def reveal(self, display):  

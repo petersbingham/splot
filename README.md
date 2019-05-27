@@ -27,9 +27,22 @@ Provides the following functions:
     def line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
                       marker_sz=None, path=None, mark_with_line=False, draw_axes=False)
 
-Note the `display` parameter can be used to suppress the chart display. It only makes sense to use this with the `path` parameter, which will save a copy of the chart (default `png`) at `path`. You may be wanting to do this because you don't have X or you don't have a python backend installed. If the second of these then you may also have to turn the default matplotlib backend off with a command like:
+### Notes
+
+* The `xss` and `yss` can be a list of values or a list of list of values, with the following resultant behaviour:
+
+|                              | `xss` list of values                        | `xss` list of list of values                             |
+|------------------------------|---------------------------------------------|----------------------------------------------------------|
+| `yss` list of values         | `yss`s against `xss`s                       | `yss`s against the first `xss` list                      |
+| `yss` list of list of values | Each list of `yss`s against the same `xss`s | Each list of `yss`s against the corresponding `xss` list |
+
+* The `display` parameter can be used to suppress the chart display. It only makes sense to use this with the `path` parameter, which will save a copy of the chart (default `png`) at `path`. You may be wanting to do this because you don't have X or you don't have a python backend installed. If the second of these then you may also have to turn the default matplotlib backend off with a command like:
 
     export MPLBACKEND="agg"
+
+* `Int` types are accepted for both x and y values. If the x values are not logged and the plot is a line then if strings are passed they will be used as equidistant tick labels on the x-axis.
+
+### Additional Functions
 
 In addition there are the folowing plot configuration functions to override the defaults:
 
