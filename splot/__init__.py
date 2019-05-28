@@ -63,11 +63,7 @@ class StaticPlot:
             self.legends.append(legend)
 
     def _create_array(self, vals):
-        try:
-            return np.ndarray((len(vals),), buffer=np.array(vals))
-        except TypeError:
-            # Contents of array can't be ints. Try converting to floats
-            return np.ndarray((len(vals),), buffer=np.array([float(val) for val in vals]))
+        return np.ndarray((len(vals),), buffer=np.array([float(val) for val in vals]))
 
     def _convert_values(self, xs, ys, plot_num, scatter):
         use_ticks = False
