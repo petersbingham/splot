@@ -108,7 +108,7 @@ class StaticPlot:
             plt.xticks(range(len(xs)), xs)
         return l
 
-    def reveal(self, display):  
+    def reveal(self, display, vlines=[]):  
         if self.draw_axes:
             plt.axhline(0, color='black')
             plt.axvline(0, color='black')
@@ -122,6 +122,8 @@ class StaticPlot:
             axes.set_xlim(xlim)
         if ylim is not None:
             axes.set_ylim(ylim)
+        for v_line in vlines:
+            plt.axvline(x=v_line, linewidth=vline_width, color=vline_colour)
         plt.draw()
         if display:
             plt.show()
@@ -168,7 +170,15 @@ line_width = None
 def set_line_width(width):
     global line_width
     line_width = width
-    
+
+vline_width = None
+vline_colour = None
+def set_vline_config(width, colour):
+    global vline_width
+    global vline_colour
+    vline_width = width
+    vline_colour = colour
+
 def _get_data_from_csv(csvpath):
     xs = []
     yss = None
@@ -186,8 +196,8 @@ def _initialise(display):
     if not display:
         plt.switch_backend('Agg')
 
-def _finialise(p, path, display):
-    p.reveal(display)
+def _finialise(p, path, display, vlines=[]):
+    p.reveal(display, vlines)
     if path is not None:
         p.save(path)
 
@@ -225,7 +235,7 @@ def line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=Fa
               logy, marker_sz, mark_with_line, path, draw_axes)
 
 def line(xss, yss, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
-         marker_sz=None, mark_with_line=False, draw_axes=False, path=None, display=True):
+         marker_sz=None, mark_with_line=False, vlines=[], draw_axes=False, path=None, display=True):
     _initialise(display)
     if not isinstance(yss[0], list):
         yss = [yss]
@@ -235,7 +245,7 @@ def line(xss, yss, title="", xlabel="", ylabel="", legends=None, logx=False, log
     else:
         p = _plot2(title, xss, yss, xlabel, ylabel, legends, logx, 
                    logy, marker_sz, mark_with_line, draw_axes, path, display)
-    _finialise(p, path, display)
+    _finialise(p, path, display, vlines)
 
 def scatter(xss, yss, title="", xlabel="", ylabel="", logx=False, logy=False,
             legend=None, marker_sz=None, draw_axes=False, path=None, display=True):
