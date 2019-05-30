@@ -173,11 +173,11 @@ def set_line_width(width):
 
 vline_width = None
 vline_colour = None
-def set_vline_config(width, colour):
+def set_vline_config(width=None, colour=None):
     global vline_width
     global vline_colour
-    vline_width = width
-    vline_colour = colour
+    if width: vline_width = width
+    if colour: vline_colour = colour
 
 def _get_data_from_csv(csvpath):
     xs = []
