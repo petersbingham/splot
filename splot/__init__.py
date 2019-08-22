@@ -33,8 +33,8 @@ class StaticPlot:
     def add_plot(self, xlabel, ylabel, logx=False, logy=False):
         plot_num = len(self.axis_config)+1
         self.fig.add_subplot(self.rows,self.cols,plot_num)
-        plt.xlabel(xlabel, fontsize=12)
-        plt.ylabel(ylabel, fontsize=12)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
         #plt.gca().set_color_cycle(['red', 'blue', 'red', 'purple'])
         self.axis_config.append([logx,logy])
 
@@ -151,6 +151,9 @@ def set_img_size(width, height):
     global FIGSZ_H
     FIGSZ_W = width
     FIGSZ_H = height
+
+def set_font_size(size):
+    matplotlib.rc('font', size=size)
 
 xlim = None
 ylim = None
