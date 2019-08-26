@@ -112,8 +112,20 @@ class StaticPlot:
         if self.draw_axes:
             plt.axhline(0, color='black')
             plt.axvline(0, color='black')
+
         if len(self.legends) > 0:
-            plt.legend(self.lines, self.legends, prop={'size':9})
+            if legend_axis_reduction is None: 
+                plt.legend(self.lines, self.legends, labelspacing=legend_spacing, prop={'size':legend_font_size})
+            else:
+                plt.legend(self.lines, self.legends, labelspacing=legend_spacing, prop={'size':legend_font_size}, bbox_to_anchor=(1.04,1), loc="upper left")
+        else:
+            if legend_axis_reduction is None: 
+                plt.legend(labelspacing=legend_spacing, prop={'size':legend_font_size})
+            else:
+                plt.legend(labelspacing=legend_spacing, prop={'size':legend_font_size}, bbox_to_anchor=(1.04,1), loc="upper left")
+        if legend_axis_reduction is not None: 
+            plt.subplots_adjust(right=1.0-legend_axis_reduction/100.)
+
         if line_width is not None:
             for line in self.lines:
                 line.set_linewidth(line_width)
@@ -152,8 +164,21 @@ def set_img_size(width, height):
     FIGSZ_W = width
     FIGSZ_H = height
 
-def set_font_size(size):
-    matplotlib.rc('font', size=size)
+legend_axis_reduction = False
+def place_legend_outside(axis_reduction_percent):
+    global legend_axis_reduction
+    legend_axis_reduction = axis_reduction_percent
+
+legend_spacing = 0.5
+def set_legend_spacing(spacing):
+    global legend_spacing
+    legend_spacing = spacing
+
+legend_font_size = 14
+def set_font_size(label_size, legend_size):
+    global legend_font_size
+    matplotlib.rc('font', size=label_size)
+    legend_font_size = legend_size
 
 xlim = None
 ylim = None
