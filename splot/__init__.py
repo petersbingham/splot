@@ -188,8 +188,17 @@ def set_extents(xlim_, ylim_):
     xlim = xlim_
     ylim = ylim_
 
+# tab20 appears to have the most distinguishable colours.
+# call plt.get_cmap('') to get a list of available maps.
+def create_colour_cycle(num_colours, alpha=1., map='tab20'):
+    cm = [plt.get_cmap(map)(1.*i/num_colours) for i in range(num_colours)]
+    return [(t[0],t[1],t[2],alpha) for t in cm]
+
 def set_colour_cycle(cycle):
     matplotlib.rcParams['axes.color_cycle'] = cycle
+
+def config_colour_cycle(num_colours, alpha=1., map='tab20'):
+    set_colour_cycle(create_colour_cycle(num_colours, alpha, map))
 
 def turn_off_colour_cycle():
     matplotlib.rcParams['axes.color_cycle'] = ['black']
@@ -206,6 +215,7 @@ def set_vline_config(width=None, colour=None):
     global vline_colour
     if width: vline_width = width
     if colour: vline_colour = colour
+
 
 def _get_data_from_csv(csvpath):
     xs = []
