@@ -164,7 +164,7 @@ def set_img_size(width, height):
     FIGSZ_W = width
     FIGSZ_H = height
 
-legend_axis_reduction = False
+legend_axis_reduction = None
 def place_legend_outside(axis_reduction_percent):
     global legend_axis_reduction
     legend_axis_reduction = axis_reduction_percent
@@ -195,13 +195,21 @@ def create_colour_cycle(num_colours, alpha=1., map='tab20'):
     return [(t[0],t[1],t[2],alpha) for t in cm]
 
 def set_colour_cycle(cycle):
-    matplotlib.rcParams['axes.color_cycle'] = cycle
+    try:
+      matplotlib.rcParams['axes.color_cycle'] = cycle
+    except KeyError: # Deprecated in older versions
+      from cycler import cycler
+      plt.rc('axes', prop_cycle=(cycler('color', cycle)))
 
 def config_colour_cycle(num_colours, alpha=1., map='tab20'):
     set_colour_cycle(create_colour_cycle(num_colours, alpha, map))
 
 def turn_off_colour_cycle():
-    matplotlib.rcParams['axes.color_cycle'] = ['black']
+    try:
+      matplotlib.rcParams['axes.color_cycle'] = ['black']
+    except KeyError: # Deprecated in older versions
+      from cycler import cycler
+      plt.rc('axes', prop_cycle=(cycler('color', ['black'])))
 
 line_width = None
 def set_line_width(width):
@@ -266,6 +274,9 @@ def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
             p.add_line(1,xss[i],yss[i],None,ms,False)
     return p
 
+def _is_container(item):
+    return isinstance(item, list) or isinstance(item, np.ndarray)
+
 def line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
                   marker_sz=None, path=None, mark_with_line=False, draw_axes=False):
     xs,yss = _get_data_from_csv(csvpath)
@@ -275,12 +286,14 @@ def line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=Fa
 def line(xss, yss, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
          marker_sz=None, mark_with_line=False, vlines=[], draw_axes=False, path=None, display=True):
     _initialise(display)
-    if not isinstance(yss[0], list):
+    if not _is_container(yss[0]):
         yss = [yss]
-    if not isinstance(xss[0], list):
+    if not _is_container(xss[0]):
         p = _plot(title, xss, yss, xlabel, ylabel, legends, logx, logy, 
                   marker_sz, mark_with_line, draw_axes, path, display)
     else:
+        if len(yss) != len(xss):
+            raise ValueError('There must be the same number of points sets in both xss and yss')
         p = _plot2(title, xss, yss, xlabel, ylabel, legends, logx, 
                    logy, marker_sz, mark_with_line, draw_axes, path, display)
     _finialise(p, path, display, vlines)
@@ -290,13 +303,15 @@ def scatter(xss, yss, title="", xlabel="", ylabel="", logx=False, logy=False,
     _initialise(display)
     p = StaticPlot(title, draw_axes=draw_axes)
     p.add_plot(xlabel, ylabel, logx, logy)
-    if not isinstance(xss[0], list):
-        if isinstance(yss[0], list):
+    if not _is_container(xss[0]):
+        if _is_container(yss[0]):
             xss = [xss] * len(yss)
         else:
             xss = [xss]
-    if not isinstance(yss[0], list):
+    if not _is_container(yss[0]):
         yss = [yss]
+    if len(yss) != len(xss):
+        raise ValueError('There must be the same number of points sets in both xss and yss')
     for i in range(len(xss)):
       p.add_scat(i, xss[i], yss[i], logx, logy, legend, marker_sz)
     _finialise(p, path, display)
