@@ -106,6 +106,8 @@ class StaticPlot:
               l, = plt.plot(ys, **kwargs)
         if use_ticks:
             plt.xticks(range(len(xs)), xs)
+        if dash_cycle is not None:
+            l.set_dashes(dash_cycle[dash_index])
         return l
 
     def reveal(self, display, vlines=[]):  
@@ -211,6 +213,12 @@ def turn_off_colour_cycle():
       from cycler import cycler
       plt.rc('axes', prop_cycle=(cycler('color', ['black'])))
 
+dash_cycle = None
+dash_index = 0
+def set_dash_cycle(cycle):
+    global dash_cycle
+    dash_cycle = cycle
+
 line_width = None
 def set_line_width(width):
     global line_width
@@ -251,17 +259,22 @@ def _plot(title, xs, yss, xlabel, ylabel, legends, logx, logy,
           marker_sz, mark_with_line, draw_axes, path, display):
     p = StaticPlot(title,draw_axes=draw_axes)
     p.add_plot(xlabel, ylabel, logx, logy)
+    global dash_index
+    dash_index = 0
     for i in range(len(yss)):
         if legends is not None:
-            p.add_line(1,xs,yss[i],legends[i],marker_sz,mark_with_line)
+            p.add_line(1,xs[:len(yss[i])],yss[i],legends[i],marker_sz,mark_with_line)
         else:
-            p.add_line(1,xs,yss[i],None,marker_sz,mark_with_line)
+            p.add_line(1,xs[:len(yss[i])],yss[i],None,marker_sz,mark_with_line)
+        dash_index += 1
     return p
 
 def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
            logy, marker_sz, mark_with_line, draw_axes, path, display):
     p = StaticPlot(title,draw_axes=draw_axes)
     p.add_plot(xlabel, ylabel, logx, logy)
+    global dash_index
+    dash_index = 0
     for i in range(len(xss)):
         if type(marker_sz) is list:
           ms = marker_sz[i]
@@ -269,9 +282,10 @@ def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
           ms = marker_sz
 
         if legends is not None:
-            p.add_line(1,xss[i],yss[i],legends[i],ms,False)
+            p.add_line(1,xss[i][:len(yss[i])],yss[i],legends[i],ms,False)
         else:
-            p.add_line(1,xss[i],yss[i],None,ms,False)
+            p.add_line(1,xss[i][:len(yss[i])],yss[i],None,ms,False)
+        dash_index += 1
     return p
 
 def _is_container(item):
