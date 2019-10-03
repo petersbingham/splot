@@ -233,13 +233,15 @@ def set_vline_config(width=None, colour=None):
     if colour: vline_colour = colour
 
 
-def _get_data_from_csv(csvpath):
+def _get_data_from_file(csvpath, delimiter=','):
     xs = []
     yss = None
     with open(csvpath, 'rb') as csvfile:
-        csvReader = csv.reader(csvfile, delimiter=',')
+        csvReader = csv.reader(csvfile, delimiter=delimiter)
         for row in csvReader:
-            xs.append(float(row[0]))
+            if delimiter==' ':
+                row = [el for el in row if el!='']
+            xs.append(float(row[0].strip()))
             if yss is None:
                 yss = [[] for i in range(0,len(row[1:]))]
             for i in range(0,len(row[1:])):
@@ -291,12 +293,6 @@ def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
 def _is_container(item):
     return isinstance(item, list) or isinstance(item, np.ndarray)
 
-def line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
-                  marker_sz=None, path=None, mark_with_line=False, draw_axes=False):
-    xs,yss = _get_data_from_csv(csvpath)
-    plot_line(title, xs, yss, xlabel, ylabel, legends, logx,
-              logy, marker_sz, mark_with_line, path, draw_axes)
-
 def line(xss, yss, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
          marker_sz=None, mark_with_line=False, vlines=[], draw_axes=False, path=None, display=True):
     _initialise(display)
@@ -311,6 +307,18 @@ def line(xss, yss, title="", xlabel="", ylabel="", legends=None, logx=False, log
         p = _plot2(title, xss, yss, xlabel, ylabel, legends, logx, 
                    logy, marker_sz, mark_with_line, draw_axes, path, display)
     _finialise(p, path, display, vlines)
+
+def line_from_file(csvpath, title="", xlabel="", ylabel="", delimiter=" ", legends=None, 
+                   logx=False, logy=False, marker_sz=None, path=None, mark_with_line=False,
+                   vlines=[], draw_axes=False, display=True):
+    xs,yss = _get_data_from_file(csvpath, delimiter)
+    line(xs, yss, title, xlabel, ylabel, legends, logx, logy, marker_sz,
+         mark_with_line, vlines, draw_axes, path, display)
+
+def line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
+                  marker_sz=None, path=None, mark_with_line=False, draw_axes=False):
+    line_from_file(csvpath, title, xlabel, ylabel, ",", legends, logx, logy,
+                   marker_sz, path, mark_with_line, draw_axes)
 
 def scatter(xss, yss, title="", xlabel="", ylabel="", logx=False, logy=False,
             legend=None, marker_sz=None, draw_axes=False, path=None, display=True):
