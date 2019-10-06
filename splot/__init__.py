@@ -233,20 +233,28 @@ def set_vline_config(width=None, colour=None):
     if colour: vline_colour = colour
 
 
-def _get_data_from_file(csvpath, delimiter=','):
-    xs = []
-    yss = None
-    with open(csvpath, 'rb') as csvfile:
-        csvReader = csv.reader(csvfile, delimiter=delimiter)
-        for row in csvReader:
-            if delimiter==' ':
-                row = [el for el in row if el!='']
-            xs.append(float(row[0].strip()))
-            if yss is None:
-                yss = [[] for i in range(0,len(row[1:]))]
-            for i in range(0,len(row[1:])):
-                yss[i].append(float(row[1+i]))
-    return xs, yss
+def _get_data_from_file(csvpaths, delimiter=','):
+    xss = []
+    yss = []
+    if isinstance(csvpaths, str):
+        csvpaths = csvpaths[csvpaths]
+    for csvpath in csvpaths:
+        with open(csvpath, 'rb') as csvfile:
+            csvReader = csv.reader(csvfile, delimiter=delimiter)
+            xs = []
+            ys = None
+            for row in csvReader:
+                if delimiter==' ':
+                    row = [el for el in row if el!='']
+                xs.append(float(row[0].strip()))
+                if ys is None:
+                    num_yss = len(row[1:])
+                    ys = [[] for i in range(0,num_yss)]
+                for i in range(0,len(row[1:])):
+                    ys[i].append(float(row[1+i]))
+            yss.extend(ys)
+            xss.extend([xs]*num_yss)
+    return xss, yss
 
 def _initialise(display):
     if not display:
@@ -284,9 +292,9 @@ def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
           ms = marker_sz
 
         if legends is not None:
-            p.add_line(1,xss[i][:len(yss[i])],yss[i],legends[i],ms,False)
+            p.add_line(1,xss[i][:len(yss[i])],yss[i],legends[i],ms,mark_with_line)
         else:
-            p.add_line(1,xss[i][:len(yss[i])],yss[i],None,ms,False)
+            p.add_line(1,xss[i][:len(yss[i])],yss[i],None,ms,mark_with_line)
         dash_index += 1
     return p
 
@@ -311,8 +319,8 @@ def line(xss, yss, title="", xlabel="", ylabel="", legends=None, logx=False, log
 def line_from_file(csvpath, title="", xlabel="", ylabel="", delimiter=" ", legends=None, 
                    logx=False, logy=False, marker_sz=None, path=None, mark_with_line=False,
                    vlines=[], draw_axes=False, display=True):
-    xs,yss = _get_data_from_file(csvpath, delimiter)
-    line(xs, yss, title, xlabel, ylabel, legends, logx, logy, marker_sz,
+    xss,yss = _get_data_from_file(csvpath, delimiter)
+    line(xss, yss, title, xlabel, ylabel, legends, logx, logy, marker_sz,
          mark_with_line, vlines, draw_axes, path, display)
 
 def line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
