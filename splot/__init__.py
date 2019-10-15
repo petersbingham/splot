@@ -15,6 +15,7 @@ HSPACE = 0.2
 FIGSZ_W = 8
 FIGSZ_H = 6
 
+
 class StaticPlot:
     DPI = 80
 
@@ -25,7 +26,7 @@ class StaticPlot:
         self.cols = cols
         self.draw_axes = draw_axes
         self.lines = []
-        self.legends = []
+        self.legend = []
         self.axis_config = []
         self.fig.subplots_adjust(left=LEFT, bottom=BOTTOM, right=RIGHT,
                                  top=TOP, wspace=WSPACE, hspace=HSPACE)
@@ -35,7 +36,6 @@ class StaticPlot:
         self.fig.add_subplot(self.rows,self.cols,plot_num)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        #plt.gca().set_color_cycle(['red', 'blue', 'red', 'purple'])
         self.axis_config.append([logx,logy])
 
     def add_line(self, plot_num, xs, ys, legend=None,
@@ -60,7 +60,7 @@ class StaticPlot:
             l = self._add_line_type(plot_num, xs, ys, marker_sz, mark_with_line, use_ticks)
         self.lines.append(l)
         if legend is not None:
-            self.legends.append(legend)
+            self.legend.append(legend)
 
     def _create_array(self, vals):
         return np.ndarray((len(vals),), buffer=np.array([float(val) for val in vals]))
@@ -82,7 +82,11 @@ class StaticPlot:
         return xs, ys, use_ticks
 
     def _add_scat_type(self, plot_num, xs, ys, marker_sz):
-        plt.scatter(xs,ys,color=['black', 'red', 'blue', 'purple'][plot_num],s=20,edgecolor='none')
+        # Need to manually do the cycling for the scatter.
+        axes = plt.gca()
+        color_cycle = axes._get_lines.prop_cycler
+        col = next(color_cycle)['color']
+        return plt.scatter(xs, ys, color=col, s=20, edgecolor='none')
 
     def _add_line_type(self, plot_num, xs, ys, marker_sz, mark_with_line, use_ticks):
         kwargs = {'basex':10}
@@ -110,16 +114,16 @@ class StaticPlot:
             l.set_dashes(dash_cycle[dash_index])
         return l
 
-    def reveal(self, display, vlines=[]):  
+    def reveal(self, display, vlines=[]):
         if self.draw_axes:
             plt.axhline(0, color='black')
             plt.axvline(0, color='black')
 
-        if len(self.legends) > 0:
+        if len(self.legend) > 0:
             if legend_axis_reduction is None: 
-                plt.legend(self.lines, self.legends, labelspacing=legend_spacing, prop={'size':legend_font_size})
+                plt.legend(self.lines, self.legend, labelspacing=legend_spacing, prop={'size':legend_font_size})
             else:
-                plt.legend(self.lines, self.legends, labelspacing=legend_spacing, prop={'size':legend_font_size}, bbox_to_anchor=(1.04,1), loc="upper left")
+                plt.legend(self.lines, self.legend, labelspacing=legend_spacing, prop={'size':legend_font_size}, bbox_to_anchor=(1.04,1), loc="upper left")
         else:
             if legend_axis_reduction is None: 
                 plt.legend(labelspacing=legend_spacing, prop={'size':legend_font_size})
@@ -197,21 +201,15 @@ def create_colour_cycle(num_colours, alpha=1., map='tab20'):
     return [(t[0],t[1],t[2],alpha) for t in cm]
 
 def set_colour_cycle(cycle):
-    try:
-      matplotlib.rcParams['axes.color_cycle'] = cycle
-    except KeyError: # Deprecated in older versions
-      from cycler import cycler
-      plt.rc('axes', prop_cycle=(cycler('color', cycle)))
+    from cycler import cycler
+    plt.rc('axes', prop_cycle=(cycler('color', cycle)))
 
 def config_colour_cycle(num_colours, alpha=1., map='tab20'):
     set_colour_cycle(create_colour_cycle(num_colours, alpha, map))
 
 def turn_off_colour_cycle():
-    try:
-      matplotlib.rcParams['axes.color_cycle'] = ['black']
-    except KeyError: # Deprecated in older versions
-      from cycler import cycler
-      plt.rc('axes', prop_cycle=(cycler('color', ['black'])))
+    from cycler import cycler
+    plt.rc('axes', prop_cycle=(cycler('color', ['black'])))
 
 dash_cycle = None
 dash_index = 0
@@ -232,6 +230,13 @@ def set_vline_config(width=None, colour=None):
     if width: vline_width = width
     if colour: vline_colour = colour
 
+orig_backend = matplotlib.get_backend()
+def backend_off():
+    # If not displaying then turn off backend. This will prevent any errors if not available.
+    plt.switch_backend('Agg')
+
+def backend_on():
+    plt.switch_backend(orig_backend)
 
 def _get_data_from_file(csvpaths, delimiter=','):
     xss = []
@@ -256,33 +261,33 @@ def _get_data_from_file(csvpaths, delimiter=','):
             xss.extend([xs]*num_yss)
     return xss, yss
 
-def _initialise(display):
-    if not display:
-        plt.switch_backend('Agg')
-
 def _finialise(p, path, display, vlines=[]):
     p.reveal(display, vlines)
     if path is not None:
         p.save(path)
 
-def _plot(title, xs, yss, xlabel, ylabel, legends, logx, logy,
-          marker_sz, mark_with_line, draw_axes, path, display):
-    p = StaticPlot(title,draw_axes=draw_axes)
-    p.add_plot(xlabel, ylabel, logx, logy)
+def _plot(title, xs, yss, xlabel, ylabel, legend, logx, logy,
+          marker_sz, mark_with_line, draw_axes, path, plot):
+    p = plot
+    if p is None:
+        p = StaticPlot(title,draw_axes=draw_axes)
+        p.add_plot(xlabel, ylabel, logx, logy)
     global dash_index
     dash_index = 0
     for i in range(len(yss)):
-        if legends is not None:
-            p.add_line(1,xs[:len(yss[i])],yss[i],legends[i],marker_sz,mark_with_line)
+        if legend is not None:
+            p.add_line(1,xs[:len(yss[i])],yss[i],legend[i],marker_sz,mark_with_line)
         else:
             p.add_line(1,xs[:len(yss[i])],yss[i],None,marker_sz,mark_with_line)
         dash_index += 1
     return p
 
-def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
-           logy, marker_sz, mark_with_line, draw_axes, path, display):
-    p = StaticPlot(title,draw_axes=draw_axes)
-    p.add_plot(xlabel, ylabel, logx, logy)
+def _plot2(title, xss, yss, xlabel, ylabel, legend, logx,
+           logy, marker_sz, mark_with_line, draw_axes, path, plot):
+    p = plot
+    if p is None:
+        p = StaticPlot(title,draw_axes=draw_axes)
+        p.add_plot(xlabel, ylabel, logx, logy)
     global dash_index
     dash_index = 0
     for i in range(len(xss)):
@@ -291,8 +296,8 @@ def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
         else:
           ms = marker_sz
 
-        if legends is not None:
-            p.add_line(1,xss[i][:len(yss[i])],yss[i],legends[i],ms,mark_with_line)
+        if legend is not None:
+            p.add_line(1,xss[i][:len(yss[i])],yss[i],legend[i],ms,mark_with_line)
         else:
             p.add_line(1,xss[i][:len(yss[i])],yss[i],None,ms,mark_with_line)
         dash_index += 1
@@ -301,38 +306,54 @@ def _plot2(title, xss, yss, xlabel, ylabel, legends, logx,
 def _is_container(item):
     return isinstance(item, list) or isinstance(item, np.ndarray)
 
-def line(xss, yss, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
-         marker_sz=None, mark_with_line=False, vlines=[], draw_axes=False, path=None, display=True):
-    _initialise(display)
+def _check_input(plot, title, xlabel, ylabel, logx, logy):
+    if plot and (title != "" or xlabel != "" or ylabel != "" or logx is not None or logy is not None):
+        raise Exception("Cannot configure title, label or log when supplying parent plot. Specify when creating parent.")
+
+def line(xss, yss, title="", xlabel="", ylabel="", legend=None, logx=None, logy=None,
+         marker_sz=None, mark_with_line=False, vlines=[], draw_axes=False,
+         path=None, display=True, plot=None):
+    _check_input(plot, title, xlabel, ylabel, logx, logy)
+    logx = False if logx is None else True
+    logy = False if logy is None else True
+
     if not _is_container(yss[0]):
         yss = [yss]
     if not _is_container(xss[0]):
-        p = _plot(title, xss, yss, xlabel, ylabel, legends, logx, logy, 
-                  marker_sz, mark_with_line, draw_axes, path, display)
+        p = _plot(title, xss, yss, xlabel, ylabel, legend, logx, logy, 
+                  marker_sz, mark_with_line, draw_axes, path, plot)
     else:
         if len(yss) != len(xss):
             raise ValueError('There must be the same number of points sets in both xss and yss')
-        p = _plot2(title, xss, yss, xlabel, ylabel, legends, logx, 
-                   logy, marker_sz, mark_with_line, draw_axes, path, display)
+        p = _plot2(title, xss, yss, xlabel, ylabel, legend, logx, logy,
+                   marker_sz, mark_with_line, draw_axes, path, plot)
     _finialise(p, path, display, vlines)
+    return p
 
-def line_from_file(csvpath, title="", xlabel="", ylabel="", delimiter=" ", legends=None, 
-                   logx=False, logy=False, marker_sz=None, path=None, mark_with_line=False,
+def line_from_file(csvpath, title="", xlabel="", ylabel="", delimiter=" ", legend=None, 
+                   logx=None, logy=None, marker_sz=None, path=None, mark_with_line=False,
                    vlines=[], draw_axes=False, display=True):
     xss,yss = _get_data_from_file(csvpath, delimiter)
-    line(xss, yss, title, xlabel, ylabel, legends, logx, logy, marker_sz,
+    line(xss, yss, title, xlabel, ylabel, legend, logx, logy, marker_sz,
          mark_with_line, vlines, draw_axes, path, display)
 
-def line_from_csv(csvpath, title="", xlabel="", ylabel="", legends=None, logx=False, logy=False,
+def line_from_csv(csvpath, title="", xlabel="", ylabel="", legend=None, logx=None, logy=None,
                   marker_sz=None, path=None, mark_with_line=False, draw_axes=False):
-    line_from_file(csvpath, title, xlabel, ylabel, ",", legends, logx, logy,
+    line_from_file(csvpath, title, xlabel, ylabel, ",", legend, logx, logy,
                    marker_sz, path, mark_with_line, draw_axes)
 
-def scatter(xss, yss, title="", xlabel="", ylabel="", logx=False, logy=False,
-            legend=None, marker_sz=None, draw_axes=False, path=None, display=True):
-    _initialise(display)
-    p = StaticPlot(title, draw_axes=draw_axes)
-    p.add_plot(xlabel, ylabel, logx, logy)
+def scatter(xss, yss, title="", xlabel="", ylabel="", logx=None, logy=None,
+            legend=None, marker_sz=None, draw_axes=False,
+            path=None, display=True, plot=None):
+    _check_input(plot, title, xlabel, ylabel, logx, logy)
+    logx = False if logx is None else True
+    logy = False if logy is None else True
+
+    p = plot
+    if p is None:
+        p = StaticPlot(title, draw_axes=draw_axes)
+        p.add_plot(xlabel, ylabel, logx, logy)
+    ls = len(p.lines)
     if not _is_container(xss[0]):
         if _is_container(yss[0]):
             xss = [xss] * len(yss)
@@ -343,6 +364,9 @@ def scatter(xss, yss, title="", xlabel="", ylabel="", logx=False, logy=False,
     if len(yss) != len(xss):
         raise ValueError('There must be the same number of points sets in both xss and yss')
     for i in range(len(xss)):
-      p.add_scat(i, xss[i], yss[i], logx, logy, legend, marker_sz)
+        if legend is None:
+            p.add_scat(ls+i, xss[i], yss[i], logx, logy, None, marker_sz)
+        else:
+            p.add_scat(ls+i, xss[i], yss[i], logx, logy, legend[i], marker_sz)
     _finialise(p, path, display)
-
+    return p
