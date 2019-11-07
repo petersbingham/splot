@@ -238,11 +238,16 @@ def backend_off():
 def backend_on():
     plt.switch_backend(orig_backend)
 
-def _get_data_from_file(csvpaths, delimiter=','):
+def _get_data_from_file(csvpaths, delimiter=',', x_index=0, y_indices=1):
+    if isinstance(y_indices, int):
+        if x_index == y_indices:
+            raise Exception("x and y indices can not be the same")
+        y_indices = [y_indices]
+
     xss = []
     yss = []
     if isinstance(csvpaths, str):
-        csvpaths = csvpaths[csvpaths]
+        csvpaths = [csvpaths]
     for csvpath in csvpaths:
         with open(csvpath, 'rb') as csvfile:
             csvReader = csv.reader(csvfile, delimiter=delimiter)
@@ -251,12 +256,15 @@ def _get_data_from_file(csvpaths, delimiter=','):
             for row in csvReader:
                 if delimiter==' ':
                     row = [el for el in row if el!='']
-                xs.append(float(row[0].strip()))
+                xs.append(float(row[x_index].strip()))
                 if ys is None:
-                    num_yss = len(row[1:])
-                    ys = [[] for i in range(0,num_yss)]
-                for i in range(0,len(row[1:])):
-                    ys[i].append(float(row[1+i]))
+                    num_yss = len(y_indices)
+                    ys = [[] for i in range(0, num_yss)]
+                j = 0
+                for i in range(0,len(row)):
+                    if i in y_indices:
+                        ys[j].append(float(row[i]))
+                        j += 1
             yss.extend(ys)
             xss.extend([xs]*num_yss)
     return xss, yss
@@ -330,17 +338,18 @@ def line(xss, yss, title="", xlabel="", ylabel="", legend=None, logx=None, logy=
     _finialise(p, path, display, vlines)
     return p
 
-def line_from_file(csvpath, title="", xlabel="", ylabel="", delimiter=" ", legend=None, 
-                   logx=None, logy=None, marker_sz=None, path=None, mark_with_line=False,
-                   vlines=[], draw_axes=False, display=True):
-    xss,yss = _get_data_from_file(csvpath, delimiter)
+def line_from_file(csvpath, title="", xlabel="", ylabel="", delimiter=" ", x_index=0, y_indices=1,
+                   legend=None, logx=None, logy=None, marker_sz=None, mark_with_line=False,
+                   vlines=[], draw_axes=False, path=None, display=True):
+    xss,yss = _get_data_from_file(csvpath, delimiter, x_index, y_indices)
     line(xss, yss, title, xlabel, ylabel, legend, logx, logy, marker_sz,
          mark_with_line, vlines, draw_axes, path, display)
 
-def line_from_csv(csvpath, title="", xlabel="", ylabel="", legend=None, logx=None, logy=None,
-                  marker_sz=None, path=None, mark_with_line=False, draw_axes=False):
-    line_from_file(csvpath, title, xlabel, ylabel, ",", legend, logx, logy,
-                   marker_sz, path, mark_with_line, draw_axes)
+def line_from_csv(csvpath, title="", xlabel="", ylabel="", x_index=0, y_indices=1,
+                  legend=None, logx=None, logy=None, marker_sz=None, mark_with_line=False,
+                  draw_axes=False, path=None):
+    line_from_file(csvpath, title, xlabel, ylabel, ",", x_index, y_indices, legend, logx, logy,
+                   marker_sz, mark_with_line, draw_axes=draw_axes, path=path)
 
 def scatter(xss, yss, title="", xlabel="", ylabel="", logx=None, logy=None,
             legend=None, marker_sz=None, draw_axes=False,
