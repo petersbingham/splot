@@ -109,7 +109,10 @@ class StaticPlot:
             else:
               l, = plt.plot(ys, **kwargs)
         if use_ticks:
-            plt.xticks(range(len(xs)), xs)
+            if rotate_tick_lbls:
+                plt.xticks(range(len(xs)), xs, rotation='vertical')
+            else:
+                plt.xticks(range(len(xs)), xs)
         if dash_cycle is not None:
             l.set_dashes(dash_cycle[dash_index])
         return l
@@ -210,6 +213,11 @@ def config_colour_cycle(num_colours, alpha=1., map='tab20'):
 def turn_off_colour_cycle():
     from cycler import cycler
     plt.rc('axes', prop_cycle=(cycler('color', ['black'])))
+
+rotate_tick_lbls = False
+def rotate_tick_labels():
+    global rotate_tick_lbls
+    rotate_tick_lbls = not rotate_tick_lbls
 
 dash_cycle = None
 dash_index = 0
