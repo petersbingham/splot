@@ -63,7 +63,13 @@ class StaticPlot:
             self.legend.append(legend)
 
     def _create_array(self, vals):
-        return np.ndarray((len(vals),), buffer=np.array([float(val) for val in vals]))
+        new_vals = []
+        for val in vals:
+          if val is None:
+            new_vals.append('NaN')
+          else:
+            new_vals.append(val)
+        return np.ndarray((len(new_vals),), buffer=np.array([float(val) for val in new_vals]))
 
     def _convert_values(self, xs, ys, plot_num, scatter):
         use_ticks = False
