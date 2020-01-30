@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import numpy as np
 import math
 import csv
@@ -133,6 +134,8 @@ class StaticPlot:
                 plt.legend(self.lines, self.legend, labelspacing=legend_spacing, prop={'size':legend_font_size})
             else:
                 plt.legend(self.lines, self.legend, labelspacing=legend_spacing, prop={'size':legend_font_size}, bbox_to_anchor=(1.04,1), loc="upper left")
+        elif legend_patch_handles is not None:
+            plt.legend(handles=legend_patch_handles)
         else:
             if legend_axis_reduction is None: 
                 plt.legend(labelspacing=legend_spacing, prop={'size':legend_font_size})
@@ -209,6 +212,17 @@ def create_colour_cycle(num_colours, alpha=1., map='tab20'):
     cm = [plt.get_cmap(map)(1.*i/num_colours) for i in range(num_colours)]
     return [(t[0],t[1],t[2],alpha) for t in cm]
 
+def create_colour_sequence(colour_cnts, alpha=1., map='tab20'):
+    num_colours = len(colour_cnts)
+    cm_ = create_colour_cycle(num_colours, alpha, map)
+    seq = [] # for lines
+    cyc = [] # for legend
+    for i in range(len(colour_cnts)):
+        cyc.append(plt.get_cmap(map)(1.*i/num_colours))
+        for j in range(colour_cnts[i]):
+            seq.append(plt.get_cmap(map)(1.*i/num_colours))
+    return [(t[0],t[1],t[2],alpha) for t in seq], [(t[0],t[1],t[2],alpha) for t in cyc]
+
 def set_colour_cycle(cycle):
     from cycler import cycler
     plt.rc('axes', prop_cycle=(cycler('color', cycle)))
@@ -219,6 +233,13 @@ def config_colour_cycle(num_colours, alpha=1., map='tab20'):
 def turn_off_colour_cycle():
     from cycler import cycler
     plt.rc('axes', prop_cycle=(cycler('color', ['black'])))
+
+legend_patch_handles = None
+def set_legend_patch_handles(colours, labels):
+    global legend_patch_handles
+    legend_patch_handles = []
+    for i,c in enumerate(colours):
+        legend_patch_handles.append(mpatches.Patch(color=c, label=labels[i]))
 
 rotate_tick_lbls = False
 def rotate_tick_labels():
@@ -297,10 +318,10 @@ def _plot(title, xs, yss, xlabel, ylabel, legend, logx, logy,
     global dash_index
     dash_index = 0
     for i in range(len(yss)):
-        if legend is not None:
-            p.add_line(1,xs[:len(yss[i])],yss[i],legend[i],marker_sz,mark_with_line)
-        else:
-            p.add_line(1,xs[:len(yss[i])],yss[i],None,marker_sz,mark_with_line)
+        plt_legend = None
+        if legend is not None and i < len(legend):
+            plt_legend = legend[i]
+        p.add_line(1,xs[:len(yss[i])],yss[i],plt_legend,marker_sz,mark_with_line)
         dash_index += 1
     return p
 
