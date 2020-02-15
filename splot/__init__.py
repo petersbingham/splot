@@ -39,26 +39,23 @@ class StaticPlot:
         plt.ylabel(ylabel)
         self.axis_config.append([logx,logy])
 
-    def add_line(self, plot_num, xs, ys, legend=None,
-                 marker_sz=None, mark_with_line=False):
-        self._add_data(plot_num, xs, ys, legend, marker_sz,
-                       False, mark_with_line)
+    def add_line(self, plot_num, xs, ys, legend=None, marker=None, marker_sz=None, mark_with_line=False):
+        self._add_data(plot_num, xs, ys, legend, marker, marker_sz, False, mark_with_line)
 
     def add_scat(self, plot_num, xs, ys, logx=False, logy=False,
-                 legend=None, marker_sz=None):
+                 legend=None, marker=None, marker_sz=None):
         if logx:
           plt.gca().set_xscale('log')
         if logy:
           plt.gca().set_yscale('log')
-        self._add_data(plot_num, xs, ys, legend, marker_sz, True, False)
+        self._add_data(plot_num, xs, ys, legend, marker, marker_sz, True, False)
 
-    def _add_data(self, plot_num, xs, ys, legend, marker_sz,
-                  scatter, mark_with_line):
+    def _add_data(self, plot_num, xs, ys, legend, marker, marker_sz, scatter, mark_with_line):
         xs, ys, use_ticks = self._convert_values(xs, ys, plot_num, scatter)
         if scatter:
-            l = self._add_scat_type(plot_num, xs, ys, marker_sz)
+            l = self._add_scat_type(plot_num, xs, ys, marker, marker_sz)
         else:
-            l = self._add_line_type(plot_num, xs, ys, marker_sz, mark_with_line, use_ticks)
+            l = self._add_line_type(plot_num, xs, ys, marker, marker_sz, mark_with_line, use_ticks)
         self.lines.append(l)
         if legend is not None:
             self.legend.append(legend)
@@ -88,17 +85,17 @@ class StaticPlot:
             ys = self._create_array(ys)
         return xs, ys, use_ticks
 
-    def _add_scat_type(self, plot_num, xs, ys, marker_sz):
+    def _add_scat_type(self, plot_num, xs, ys, marker, marker_sz):
         # Need to manually do the cycling for the scatter.
         axes = plt.gca()
         color_cycle = axes._get_lines.prop_cycler
         col = next(color_cycle)['color']
-        return plt.scatter(xs, ys, color=col, s=20, edgecolor='none')
+        return plt.scatter(xs, ys, color=col, s=marker_sz, edgecolor='none', marker=marker)
 
-    def _add_line_type(self, plot_num, xs, ys, marker_sz, mark_with_line, use_ticks):
+    def _add_line_type(self, plot_num, xs, ys, marker, marker_sz, mark_with_line, use_ticks):
         kwargs = {'basex':10}
-        if marker_sz:
-            kwargs = {'basex':10, 'linestyle':'None' if not mark_with_line else 'solid', 'marker':'o', 'markerfacecolor':'black', 'markersize':marker_sz}
+        if marker:
+            kwargs = {'basex':10, 'linestyle':'None' if not mark_with_line else 'solid', 'markerfacecolor':'black', 'marker':marker, 'markersize':marker_sz}
         if self.axis_config[plot_num-1][0] and self.axis_config[plot_num-1][1]:
             l, = plt.loglog(xs, ys, **kwargs)
         elif self.axis_config[plot_num-1][0]:
@@ -313,7 +310,7 @@ def _finialise(p, path, display, vlines=[]):
         p.save(path)
 
 def _plot(title, xs, yss, xlabel, ylabel, legend, logx, logy,
-          marker_sz, mark_with_line, draw_axes, path, plot):
+          marker, marker_sz, mark_with_line, draw_axes, path, plot):
     p = plot
     if p is None:
         p = StaticPlot(title,draw_axes=draw_axes)
@@ -324,12 +321,12 @@ def _plot(title, xs, yss, xlabel, ylabel, legend, logx, logy,
         plt_legend = None
         if legend is not None and i < len(legend):
             plt_legend = legend[i]
-        p.add_line(1,xs[:len(yss[i])],yss[i],plt_legend,marker_sz,mark_with_line)
+        p.add_line(1,xs[:len(yss[i])], yss[i], plt_legend, marker, marker_sz, mark_with_line)
         dash_index += 1
     return p
 
-def _plot2(title, xss, yss, xlabel, ylabel, legend, logx,
-           logy, marker_sz, mark_with_line, draw_axes, path, plot):
+def _plot2(title, xss, yss, xlabel, ylabel, legend, logx, logy,
+           marker, marker_sz, mark_with_line, draw_axes, path, plot):
     p = plot
     if p is None:
         p = StaticPlot(title,draw_axes=draw_axes)
@@ -343,9 +340,9 @@ def _plot2(title, xss, yss, xlabel, ylabel, legend, logx,
           ms = marker_sz
 
         if legend is not None:
-            p.add_line(1,xss[i][:len(yss[i])],yss[i],legend[i],ms,mark_with_line)
+            p.add_line(1,xss[i][:len(yss[i])],yss[i], legend[i], marker, ms, mark_with_line)
         else:
-            p.add_line(1,xss[i][:len(yss[i])],yss[i],None,ms,mark_with_line)
+            p.add_line(1,xss[i][:len(yss[i])],yss[i], None, marker, ms, mark_with_line)
         dash_index += 1
     return p
 
@@ -357,7 +354,7 @@ def _check_input(plot, title, xlabel, ylabel, logx, logy):
         raise Exception("Cannot configure title, label or log when supplying parent plot. Specify when creating parent.")
 
 def line(xss, yss, title="", xlabel="", ylabel="", legend=None, logx=None, logy=None,
-         marker_sz=None, mark_with_line=False, vlines=[], draw_axes=False,
+         marker=None, marker_sz=None, mark_with_line=True, vlines=[], draw_axes=False,
          path=None, display=True, plot=None):
     _check_input(plot, title, xlabel, ylabel, logx, logy)
     logx = False if logx is None else True
@@ -367,30 +364,30 @@ def line(xss, yss, title="", xlabel="", ylabel="", legend=None, logx=None, logy=
         yss = [yss]
     if not _is_container(xss[0]):
         p = _plot(title, xss, yss, xlabel, ylabel, legend, logx, logy, 
-                  marker_sz, mark_with_line, draw_axes, path, plot)
+                  marker, marker_sz, mark_with_line, draw_axes, path, plot)
     else:
         if len(yss) != len(xss):
             raise ValueError('There must be the same number of points sets in both xss and yss')
         p = _plot2(title, xss, yss, xlabel, ylabel, legend, logx, logy,
-                   marker_sz, mark_with_line, draw_axes, path, plot)
+                   marker, marker_sz, mark_with_line, draw_axes, path, plot)
     _finialise(p, path, display, vlines)
     return p
 
 def line_from_file(csvpath, title="", xlabel="", ylabel="", delimiter=" ", x_index=0, y_indices=1,
-                   legend=None, logx=None, logy=None, marker_sz=None, mark_with_line=False,
+                   legend=None, logx=None, logy=None, marker=None, marker_sz=None, mark_with_line=True,
                    vlines=[], draw_axes=False, path=None, display=True):
     xss,yss = _get_data_from_file(csvpath, delimiter, x_index, y_indices)
-    line(xss, yss, title, xlabel, ylabel, legend, logx, logy, marker_sz,
+    line(xss, yss, title, xlabel, ylabel, legend, logx, logy, marker, marker_sz,
          mark_with_line, vlines, draw_axes, path, display)
 
 def line_from_csv(csvpath, title="", xlabel="", ylabel="", x_index=0, y_indices=1,
-                  legend=None, logx=None, logy=None, marker_sz=None, mark_with_line=False,
+                  legend=None, logx=None, logy=None, marker=None, marker_sz=None, mark_with_line=True,
                   draw_axes=False, path=None):
     line_from_file(csvpath, title, xlabel, ylabel, ",", x_index, y_indices, legend, logx, logy,
-                   marker_sz, mark_with_line, draw_axes=draw_axes, path=path)
+                   marker, marker_sz, mark_with_line, draw_axes=draw_axes, path=path)
 
 def scatter(xss, yss, title="", xlabel="", ylabel="", logx=None, logy=None,
-            legend=None, marker_sz=None, draw_axes=False,
+            legend=None, marker='x', marker_sz=None, draw_axes=False,
             path=None, display=True, plot=None):
     _check_input(plot, title, xlabel, ylabel, logx, logy)
     logx = False if logx is None else True
@@ -412,8 +409,8 @@ def scatter(xss, yss, title="", xlabel="", ylabel="", logx=None, logy=None,
         raise ValueError('There must be the same number of points sets in both xss and yss')
     for i in range(len(xss)):
         if legend is None:
-            p.add_scat(ls+i, xss[i], yss[i], logx, logy, None, marker_sz)
+            p.add_scat(ls+i, xss[i], yss[i], logx, logy, None, marker, marker_sz)
         else:
-            p.add_scat(ls+i, xss[i], yss[i], logx, logy, legend[i], marker_sz)
+            p.add_scat(ls+i, xss[i], yss[i], logx, logy, legend[i], marker, marker_sz)
     _finialise(p, path, display)
     return p
