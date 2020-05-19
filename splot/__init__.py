@@ -57,6 +57,8 @@ class StaticPlot:
         else:
             l = self._add_line_type(plot_num, xs, ys, marker, marker_sz, mark_with_line, use_ticks)
         self.lines.append(l)
+        if line_width is not None:
+            l.set_linewidth(line_width)
         if legend is not None:
             self.legend.append(legend)
 
@@ -141,9 +143,6 @@ class StaticPlot:
         if legend_axis_reduction is not None: 
             plt.subplots_adjust(right=1.0-legend_axis_reduction/100.)
 
-        if line_width is not None:
-            for line in self.lines:
-                line.set_linewidth(line_width)
         axes = plt.gca()
         if xlim is not None:
             axes.set_xlim(xlim)
@@ -357,8 +356,8 @@ def line(xss, yss, title="", xlabel="", ylabel="", legend=None, logx=None, logy=
          marker=None, marker_sz=None, mark_with_line=True, vlines=[], draw_axes=False,
          path=None, display=True, plot=None):
     _check_input(plot, title, xlabel, ylabel, logx, logy)
-    logx = False if logx is None else True
-    logy = False if logy is None else True
+    logx = False if logx is None else logx
+    logy = False if logy is None else logy
 
     if not _is_container(yss[0]):
         yss = [yss]
