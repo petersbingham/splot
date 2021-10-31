@@ -129,10 +129,16 @@ class StaticPlot:
             plt.axvline(0, color='black')
 
         if len(self.legend) > 0:
-            if legend_axis_reduction is None: 
-                plt.legend(self.lines, self.legend, labelspacing=legend_spacing, prop={'size':legend_font_size})
-            else:
-                plt.legend(self.lines, self.legend, labelspacing=legend_spacing, prop={'size':legend_font_size}, bbox_to_anchor=(1.04,1), loc="upper left")
+          if legend_indices is not None:
+            handles = [handle for i, handle in enumerate(self.lines) if i in legend_indices]
+            labels = [label for i, label in enumerate(self.legend) if i in legend_indices]
+          else:
+            handles = self.lines
+            labels = self.legend
+          if legend_axis_reduction is None: 
+            plt.legend(handles, labels, labelspacing=legend_spacing, prop={'size':legend_font_size})
+          else:
+            plt.legend(handles, labels, labelspacing=legend_spacing, prop={'size':legend_font_size}, bbox_to_anchor=(1.04,1), loc="upper left")
         elif legend_patch_handles is not None:
             plt.legend(handles=legend_patch_handles)
         else:
@@ -151,6 +157,7 @@ class StaticPlot:
         for v_line in vlines:
             plt.axvline(x=v_line, linewidth=vline_width, color=vline_colour)
         plt.draw()
+
         if display:
             plt.show()
 
@@ -190,6 +197,11 @@ legend_spacing = 0.5
 def set_legend_spacing(spacing):
     global legend_spacing
     legend_spacing = spacing
+
+legend_indices = None
+def set_legend_indices(indices):
+  global legend_indices
+  legend_indices = indices
 
 legend_font_size = 14
 def set_font_size(label_size, legend_size):
